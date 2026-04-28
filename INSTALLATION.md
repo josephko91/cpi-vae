@@ -35,21 +35,19 @@ nvidia-smi  # Shows GPU and CUDA version
 **Install PyTorch matching your CUDA version:**
 
 ```bash
-# CUDA 12.2
-pip install --index-url https://download.pytorch.org/whl/cu122 \
+# CUDA 12.1 or 12.2 (recommended - cu122 wheels not available)
+pip install --index-url https://download.pytorch.org/whl/cu121 \
   torch torchvision torchaudio
 
 # CUDA 12.4
 pip install --index-url https://download.pytorch.org/whl/cu124 \
   torch torchvision torchaudio
 
-# CUDA 12.1
-pip install --index-url https://download.pytorch.org/whl/cu121 \
-  torch torchvision torchaudio
-
 # CPU-only (no GPU)
 pip install torch torchvision torchaudio
 ```
+
+**Note:** PyTorch doesn't provide cu122 wheels. For CUDA 12.2, use cu121 (older, compatible) or cu124 (newer). Check your driver with `nvidia-smi | grep "CUDA Version"`.
 
 **Verify installation:**
 ```bash
@@ -123,10 +121,10 @@ python -c "import torch; print('PyTorch CUDA:', torch.version.cuda)"
 3. If versions don't match, reinstall PyTorch with the correct index URL:
 ```bash
 pip uninstall torch torchvision torchaudio -y
-# For CUDA 12.2 (most common)
-pip install --index-url https://download.pytorch.org/whl/cu122 \
+# For CUDA 12.1 or 12.2 (cu122 not available)
+pip install --index-url https://download.pytorch.org/whl/cu121 \
   torch torchvision torchaudio
-# Or use cu121, cu124, etc. to match your driver version
+# Or cu124, cu126, cu128, cu129, cu130, etc. to match your driver version
 ```
 
 ### Import errors when running scripts?
@@ -172,7 +170,7 @@ mamba activate cpi-vae
    ```bash
    pip uninstall cpi-vae torch torchvision torchaudio numpy Pillow -y
    pip install -r requirements.txt
-   # For CUDA 12.2
-   pip install --index-url https://download.pytorch.org/whl/cu122 torch torchvision torchaudio
-   # Or cu121, cu124, etc. to match your driver
+   # For CUDA 12.1/12.2 (cu122 not available)
+   pip install --index-url https://download.pytorch.org/whl/cu121 torch torchvision torchaudio
+   # Or cu124, cu126, etc. to match your driver
    ```
