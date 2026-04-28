@@ -1,0 +1,17 @@
+# YAML config file listing CPI data directories
+# Use with: python scripts/run_train.py --config configs/data_dirs.yaml
+
+data_dirs:
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/MC3E/single_imgs_v1.4.0
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/ARM/single_imgs_v1.4.0
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/MPACE/single_imgs_v1.4.0
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/IPHEX/single_imgs_v1.4.0
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/AIRS_II/single_imgs_v1.4.0
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/ICE_L/single_imgs_v1.4.0
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/CRYSTAL_FACE_NASA/single_imgs_v1.4.0
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/MACPEX/single_imgs_v1.4.0
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/MIDCIX/single_imgs_v1.4.0
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/ISDAC/single_imgs_v1.4.0
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/ATTREX/single_imgs_v1.4.0
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/OLYMPEX/single_imgs_v1.4.0
+  - /home/vanessa/hulk/cocpit/cpi_data/campaigns/CRYSTAL_FACE_UND/single_imgs_v1.4.0
