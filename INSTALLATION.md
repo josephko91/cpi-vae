@@ -1,134 +1,178 @@
 # Installation Guide
 
-Choose one method based on your setup:
+> **TL;DR:** Install core deps, add PyTorch for your GPU, run training script directly from the repo.
 
-## Option 1: Conda/Mamba (Recommended)
+## Quick Start (Recommended)
 
-Create a lightweight conda environment with core dependencies, then install PyTorch from the official PyTorch pip wheels that match your CUDA driver. This avoids conda solver issues and ensures a compatible PyTorch build for your GPU.
+### 1. Create environment
 
+**With Mamba (fastest):**
 ```bash
-# Create the environment (environment.yml contains core deps only)
 mamba env create -f environment.yml
 mamba activate cpi-vae
-
-# Install PyTorch via official PyTorch pip wheels for your CUDA version.
-# Example: CUDA 12.2
-pip install --index-url https://download.pytorch.org/whl/cu122 \
-  torch torchvision torchaudio
-
-# Or for CUDA 13.0
-pip install --index-url https://download.pytorch.org/whl/cu130 \
-  torch torchvision torchaudio
-
-# For CPU-only
-pip install torch torchvision torchaudio
-
-# Verify CUDA availability
-python - <<'PY'
-import torch
-print('CUDA available:', torch.cuda.is_available())
-if torch.cuda.is_available():
-    print('GPU:', torch.cuda.get_device_name(0))
-    print('CUDA version:', torch.version.cuda)
-PY
 ```
 
----
-
-## Option 2: Pip with CUDA Support
-
-If you prefer a pip-only workflow, install core Python deps first and then install the PyTorch wheels that match your CUDA driver.
-
-1. Check your driver/CUDA version:
-
+**With Conda:**
 ```bash
-nvidia-smi
+conda env create -f environment.yml
+conda activate cpi-vae
 ```
 
-2. Install core deps (inside a venv or conda env):
-
+**With venv (Python 3.8+):**
 ```bash
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Install PyTorch wheels using the appropriate index URL:
+### 2. Install PyTorch
+
+**Check your GPU setup:**
+```bash
+nvidia-smi  # Shows GPU and CUDA version
+```
+
+**Install PyTorch matching your CUDA version:**
 
 ```bash
-# CUDA 12.2 (example)
+# CUDA 12.2
 pip install --index-url https://download.pytorch.org/whl/cu122 \
   torch torchvision torchaudio
 
-# CUDA 13.0
-pip install --index-url https://download.pytorch.org/whl/cu130 \
+# CUDA 12.4
+pip install --index-url https://download.pytorch.org/whl/cu124 \
   torch torchvision torchaudio
 
-# CPU-only
+# CUDA 12.1
+pip install --index-url https://download.pytorch.org/whl/cu121 \
+  torch torchvision torchaudio
+
+# CPU-only (no GPU)
 pip install torch torchvision torchaudio
 ```
 
-Verify as above with the small Python snippet.
+**Verify installation:**
+```bash
+python -c "import torch; print('CUDA available:', torch.cuda.is_available())"
+```
+
+### 3. Run training
+
+```bash
+# Quick test (CPU)
+python scripts/run_train.py --config configs/data_dirs.yaml \
+  --max_samples 100 --image_size 224 --epochs 1 --batch_size 8 --device cpu
+
+# Full training (GPU)
+python scripts/run_train.py --config configs/data_dirs.yaml \
+  --max_samples 5000 --image_size 224 --epochs 10 --batch_size 32 --device cuda
+```
 
 ---
 
-## Option 3: pip + pyproject.toml (Modern)
+## Alternative: Install from GitHub (for development)
 
-Install with optional CUDA dependencies:
+---
+
+If you want to contribute to the project, you can install in editable mode:
 
 ```bash
-# For CUDA 12.2
-pip install ".[cu122]" --index-url https://download.pytorch.org/whl/cu122
-
-# For CUDA 13.0
-pip install ".[cu130]" --index-url https://download.pytorch.org/whl/cu130
-
-# For CPU-only
-pip install ".[cpu]"
-
-# For development
-pip install ".[dev,cu122]" --index-url https://download.pytorch.org/whl/cu122
+# This will allow you to edit the code and see changes immediately
+pip install -e .
 ```
 
 ---
 
 ## Troubleshooting
 
-### CUDA not available after install?
+### Build failed: "email must be idn-email"
 
-**Problem:** `torch.cuda.is_available()` returns False  
-**Solution:** Ensure PyTorch CUDA version matches your driver:
+**Problem:**
+```
+error: subprocess-exited-with-error
+configuration error: `project.authors[0].email` must be idn-email
+```
 
+**Solution:** This was a bug in older versions. Update to the latest code:
 ```bash
-# Check your driver
-nvidia-smi | grep "CUDA Version"
+git pull
+```
 
-# Check PyTorch
+The `pyproject.toml` has been fixed to remove the invalid empty email field. If you still have the old code, simply delete it and clone fresh:
+```bash
+cd /path/to/parent && rm -rf cpi-vae
+git clone <repo-url>
+```
+
+### CUDA not available after PyTorch install?
+
+**Problem:** `torch.cuda.is_available()` returns `False`
+
+**Solution:** Ensure PyTorch CUDA version matches your GPU driver version.
+
+1. Check your driver:
+```bash
+nvidia-smi | grep "CUDA Version"
+```
+
+2. Check PyTorch:
+```bash
 python -c "import torch; print('PyTorch CUDA:', torch.version.cuda)"
 ```
 
-If they don't match (e.g., driver has CUDA 12.2 but PyTorch has cu130), reinstall PyTorch with the correct index URL.
-
-### "Old driver" warning?
-
-Update your driver or reinstall PyTorch for an older CUDA version that matches your driver.
-
+3. If versions don't match, reinstall PyTorch with the correct index URL:
 ```bash
-# Example: If driver is CUDA 12.2
-pip uninstall torch torchvision torchaudio
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu122
+pip uninstall torch torchvision torchaudio -y
+# For CUDA 12.2 (most common)
+pip install --index-url https://download.pytorch.org/whl/cu122 \
+  torch torchvision torchaudio
+# Or use cu121, cu124, etc. to match your driver version
 ```
 
----
+### Import errors when running scripts?
 
-## Running Training
+**Problem:** `ModuleNotFoundError: No module named 'cpi_vae'`
 
-Once installed, run training:
-
+**Solution:** Run scripts from the repo root:
 ```bash
-# CPU (slow, for testing)
-python scripts/run_train.py --config configs/data_dirs.yaml \
-  --max_samples 1000 --image_size 224 --epochs 1 --batch_size 8 --device cpu
-
-# GPU (fast)
-python scripts/run_train.py --config configs/data_dirs.yaml \
-  --max_samples 5000 --image_size 224 --epochs 10 --batch_size 32 --device cuda
+cd /path/to/cpi-vae
+python scripts/run_train.py --config configs/data_dirs.yaml --device cpu
 ```
+
+Or add repo to PYTHONPATH:
+```bash
+export PYTHONPATH="/path/to/cpi-vae:$PYTHONPATH"
+python scripts/run_train.py --config configs/data_dirs.yaml --device cpu
+```
+
+### Dependency conflicts?
+
+**Problem:** Conda solver is stuck or returns errors
+
+**Solution:** Use mamba instead (faster solver):
+```bash
+pip install mamba  # or: conda install -c conda-forge mamba
+mamba env create -f environment.yml
+mamba activate cpi-vae
+```
+
+### Still having issues?
+
+1. **Verify environment:** 
+   ```bash
+   pip list | grep -E "torch|numpy|Pillow"
+   ```
+
+2. **Check Python version:**
+   ```bash
+   python --version  # Should be 3.8+
+   ```
+
+3. **Clean reinstall:**
+   ```bash
+   pip uninstall cpi-vae torch torchvision torchaudio numpy Pillow -y
+   pip install -r requirements.txt
+   # For CUDA 12.2
+   pip install --index-url https://download.pytorch.org/whl/cu122 torch torchvision torchaudio
+   # Or cu121, cu124, etc. to match your driver
+   ```
