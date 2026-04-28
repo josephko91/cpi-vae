@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 
 class ConvEncoder(nn.Module):
-    def __init__(self, in_channels=3, z_dim=128, base_channels=64):
+    def __init__(self, in_channels=1, z_dim=128, base_channels=64, image_size=224):
         super().__init__()
         c = base_channels
         self.features = nn.Sequential(
@@ -18,7 +18,9 @@ class ConvEncoder(nn.Module):
             nn.Conv2d(c * 4, c * 8, 4, 2, 1),
             nn.ReLU(True),
         )
-        self._feat_dim = c * 8 * 4 * 4
+        # compute spatial size after 4 downsampling steps ( /2^4 == /16 )
+        h_w = image_size // 16
+        self._feat_dim = c * 8 * h_w * h_w
         self.fc_mu = nn.Linear(self._feat_dim, z_dim)
         self.fc_logvar = nn.Linear(self._feat_dim, z_dim)
 
@@ -29,10 +31,12 @@ class ConvEncoder(nn.Module):
 
 
 class ConvDecoder(nn.Module):
-    def __init__(self, out_channels=3, z_dim=128, base_channels=64):
+    def __init__(self, out_channels=1, z_dim=128, base_channels=64, image_size=224):
         super().__init__()
         c = base_channels
-        self.fc = nn.Linear(z_dim, c * 8 * 4 * 4)
+        h_w = image_size // 16
+        self._feat_h = h_w
+        self.fc = nn.Linear(z_dim, c * 8 * h_w * h_w)
         self.deconv = nn.Sequential(
             nn.ConvTranspose2d(c * 8, c * 4, 4, 2, 1),
             nn.ReLU(True),
@@ -51,10 +55,10 @@ class ConvDecoder(nn.Module):
 
 
 class ConvVAE(nn.Module):
-    def __init__(self, in_channels=3, z_dim=128, base_channels=64):
+    def __init__(self, in_channels=1, z_dim=128, base_channels=64, image_size=224):
         super().__init__()
-        self.encoder = ConvEncoder(in_channels, z_dim, base_channels)
-        self.decoder = ConvDecoder(in_channels, z_dim, base_channels)
+        self.encoder = ConvEncoder(in_channels, z_dim, base_channels, image_size=image_size)
+        self.decoder = ConvDecoder(in_channels, z_dim, base_channels, image_size=image_size)
 
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)

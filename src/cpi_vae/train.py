@@ -25,7 +25,7 @@ def train(config):
     """Train the model. `config` may be an argparse.Namespace or mapping."""
     set_seed(int(getattr(config, "seed", 42)))
     dirs = list(getattr(config, "data_dirs", []))
-    dataset = CPIDataset(dirs, image_size=getattr(config, "image_size", 64), augment=True)
+    dataset = CPIDataset(dirs, image_size=getattr(config, "image_size", 224), augment=True)
     if len(dataset) == 0:
         raise RuntimeError("No images found in data directories")
     val_frac = float(getattr(config, "val_frac", 0.05))
@@ -37,7 +37,7 @@ def train(config):
     val_loader = DataLoader(val_ds, batch_size=getattr(config, "batch_size", 128), shuffle=False, num_workers=4)
 
     device = torch.device(getattr(config, "device", "cuda") if torch.cuda.is_available() else "cpu")
-    model = ConvVAE(in_channels=3, z_dim=getattr(config, "z_dim", 128)).to(device)
+    model = ConvVAE(in_channels=1, z_dim=getattr(config, "z_dim", 128), image_size=getattr(config, "image_size", 224)).to(device)
     opt = torch.optim.Adam(model.parameters(), lr=getattr(config, "lr", 1e-3))
 
     best_val = float("inf")

@@ -15,7 +15,7 @@ class CPIDataset(Dataset):
     Returns (image_tensor, filepath)
     """
 
-    def __init__(self, dirs: List[str], image_size: int = 64, augment: bool = False):
+    def __init__(self, dirs: List[str], image_size: int = 224, augment: bool = False):
         paths = []
         for d in dirs:
             paths += glob.glob(os.path.join(d, "*.png"))
@@ -58,6 +58,7 @@ class CPIDataset(Dataset):
 
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, str]:
         p = self.paths[idx]
-        im = Image.open(p).convert("RGB")
+        # Load as single-channel (grayscale) image
+        im = Image.open(p).convert("L")
         im = self.transform(im)
         return im, p

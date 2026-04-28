@@ -11,7 +11,7 @@ def load_model(checkpoint_path: str, device=None):
     device = device or (torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu"))
     ckpt = torch.load(checkpoint_path, map_location=device)
     z_dim = ckpt.get("z_dim") or ckpt.get("model", {}).get("z_dim", 128)
-    model = ConvVAE(in_channels=3, z_dim=z_dim).to(device)
+    model = ConvVAE(in_channels=1, z_dim=z_dim).to(device)
     model.load_state_dict(ckpt.get("model_state") or ckpt.get("model") or ckpt.get("model_state_dict", {}))
     model.eval()
     return model
@@ -19,7 +19,7 @@ def load_model(checkpoint_path: str, device=None):
 
 def evaluate(checkpoint_path: str, data_dirs, out_dir: str, batch_size: int = 64):
     model = load_model(checkpoint_path)
-    dataset = CPIDataset(data_dirs, image_size=64, augment=False)
+    dataset = CPIDataset(data_dirs, image_size=224, augment=False)
     loader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=4)
     os.makedirs(out_dir, exist_ok=True)
     device = next(model.parameters()).device
