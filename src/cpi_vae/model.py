@@ -50,7 +50,7 @@ class ConvDecoder(nn.Module):
 
     def forward(self, z):
         h = self.fc(z)
-        h = h.view(h.size(0), -1, 4, 4)
+        h = h.view(h.size(0), -1, self._feat_h, self._feat_h)
         return self.deconv(h)
 
 
