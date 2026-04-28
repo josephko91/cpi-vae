@@ -18,14 +18,20 @@ class CPIDataset(Dataset):
     def __init__(self, dirs: List[str], image_size: int = 224, augment: bool = False, max_samples: Optional[int] = None):
         paths = []
         for d in dirs:
-            paths += glob.glob(os.path.join(d, "*.png"))
+            found = glob.glob(os.path.join(d, "*.png"))
+            print(f"[DEBUG] Directory {d}: found {len(found)} images")
+            paths += found
         self.paths = sorted(paths)
+        print(f"[DEBUG] Total: {len(self.paths)} images from {len(dirs)} directories")
         
         # Randomly subsample if max_samples is specified
         if max_samples is not None and len(self.paths) > max_samples:
             import numpy as np
             indices = np.random.choice(len(self.paths), size=max_samples, replace=False)
             self.paths = [self.paths[i] for i in sorted(indices)]
+            print(f"[DEBUG] Subsampled to {len(self.paths)} images (max_samples={max_samples})")
+        elif max_samples is not None:
+            print(f"[DEBUG] max_samples={max_samples} but only {len(self.paths)} total found, using all")
         
         # Base transforms (resizing + normalization)
         self.base_transform = T.Compose([

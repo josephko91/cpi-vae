@@ -91,6 +91,7 @@ def main():
     if args.config:
         args.data_dirs = load_data_dirs_from_config(args.config)
         print(f"Loaded {len(args.data_dirs)} directories from {args.config}")
+        print(f"[DEBUG] Directories: {args.data_dirs}")
     
     train_mod.train(args)
 
