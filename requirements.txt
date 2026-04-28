@@ -1,5 +1,21 @@
-torch>=1.12
-torchvision
-numpy
-Pillow
-tqdm
+# Base requirements for CPI-VAE
+# 
+# NOTE: Use one of the CUDA-specific requirements files instead:
+#   - requirements-cu121.txt  (for CUDA 12.1)
+#   - requirements-cu122.txt  (for CUDA 12.2)  [RECOMMENDED for most systems]
+#   - requirements-cu130.txt  (for CUDA 13.0+)
+#   - requirements-cpu.txt    (CPU-only / Mac / Windows)
+#   - environment.yml         (for conda/mamba - RECOMMENDED)
+#
+# For mamba/conda users (best approach):
+#   mamba env create -f environment.yml
+#   mamba activate cpi-vae
+#
+# For pip users with CUDA 12.2 (example):
+#   pip install -r requirements-cu122.txt --index-url https://download.pytorch.org/whl/cu122
+#
+# Core dependencies (torch will be installed via CUDA-specific requirements):
+numpy>=1.21
+Pillow>=9.0
+tqdm>=4.60
+pyyaml>=5.4
