@@ -2,7 +2,7 @@
 import os
 import glob
 from PIL import Image
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import torch
 from torch.utils.data import Dataset
@@ -15,11 +15,17 @@ class CPIDataset(Dataset):
     Returns (image_tensor, filepath)
     """
 
-    def __init__(self, dirs: List[str], image_size: int = 224, augment: bool = False):
+    def __init__(self, dirs: List[str], image_size: int = 224, augment: bool = False, max_samples: Optional[int] = None):
         paths = []
         for d in dirs:
             paths += glob.glob(os.path.join(d, "*.png"))
         self.paths = sorted(paths)
+        
+        # Randomly subsample if max_samples is specified
+        if max_samples is not None and len(self.paths) > max_samples:
+            import numpy as np
+            indices = np.random.choice(len(self.paths), size=max_samples, replace=False)
+            self.paths = [self.paths[i] for i in sorted(indices)]
         
         # Base transforms (resizing + normalization)
         self.base_transform = T.Compose([

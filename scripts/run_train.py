@@ -70,13 +70,14 @@ Examples:
     data_group.add_argument("--config", type=str,
                             help="Path to config file listing data directories (YAML or plain text)")
     
-    p.add_argument("--image_size", type=int, default=64)
+    p.add_argument("--image_size", type=int, default=224)
     p.add_argument("--z_dim", type=int, default=128)
     p.add_argument("--batch_size", type=int, default=128)
     p.add_argument("--epochs", type=int, default=50)
     p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--out_dir", type=str, default="checkpoints")
     p.add_argument("--val_frac", type=float, default=0.05)
+    p.add_argument("--max_samples", type=int, default=None, help="Limit total dataset to this many random samples (optional)")
     p.add_argument("--device", type=str, default="cuda")
     p.add_argument("--seed", type=int, default=42)
     return p

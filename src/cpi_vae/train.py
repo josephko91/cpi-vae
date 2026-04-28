@@ -25,7 +25,10 @@ def train(config):
     """Train the model. `config` may be an argparse.Namespace or mapping."""
     set_seed(int(getattr(config, "seed", 42)))
     dirs = list(getattr(config, "data_dirs", []))
-    dataset = CPIDataset(dirs, image_size=getattr(config, "image_size", 224), augment=True)
+    max_samples = getattr(config, "max_samples", None)
+    if max_samples is not None:
+        max_samples = int(max_samples)
+    dataset = CPIDataset(dirs, image_size=getattr(config, "image_size", 224), augment=True, max_samples=max_samples)
     if len(dataset) == 0:
         raise RuntimeError("No images found in data directories")
     val_frac = float(getattr(config, "val_frac", 0.05))
