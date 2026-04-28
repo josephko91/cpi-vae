@@ -1,20 +1,15 @@
-# Base requirements for CPI-VAE
-# 
-# NOTE: Use one of the CUDA-specific requirements files instead:
-#   - requirements-cu121.txt  (for CUDA 12.1)
-#   - requirements-cu122.txt  (for CUDA 12.2)  [RECOMMENDED for most systems]
-#   - requirements-cu130.txt  (for CUDA 13.0+)
-#   - requirements-cpu.txt    (CPU-only / Mac / Windows)
-#   - environment.yml         (for conda/mamba - RECOMMENDED)
-#
-# For mamba/conda users (best approach):
-#   mamba env create -f environment.yml
-#   mamba activate cpi-vae
-#
-# For pip users with CUDA 12.2 (example):
-#   pip install -r requirements-cu122.txt --index-url https://download.pytorch.org/whl/cu122
-#
-# Core dependencies (torch will be installed via CUDA-specific requirements):
+# Core dependencies for CPI-VAE (install these first)
+# NOTE: Install PyTorch separately using the official PyTorch pip wheels
+# matching your CUDA driver. Examples:
+#   CUDA 12.2:
+#     pip install --index-url https://download.pytorch.org/whl/cu122 \
+#       torch torchvision torchaudio
+#   CUDA 13.0:
+#     pip install --index-url https://download.pytorch.org/whl/cu130 \
+#       torch torchvision torchaudio
+#   CPU-only:
+#     pip install torch torchvision torchaudio
+
 numpy>=1.21
 Pillow>=9.0
 tqdm>=4.60

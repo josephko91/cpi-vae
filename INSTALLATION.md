@@ -4,12 +4,24 @@ Choose one method based on your setup:
 
 ## Option 1: Conda/Mamba (Recommended)
 
-The easiest and most robust approach — conda handles CUDA automatically.
+Create a lightweight conda environment with core dependencies, then install PyTorch from the official PyTorch pip wheels that match your CUDA driver. This avoids conda solver issues and ensures a compatible PyTorch build for your GPU.
 
 ```bash
-# Create environment from environment.yml
+# Create the environment (environment.yml contains core deps only)
 mamba env create -f environment.yml
 mamba activate cpi-vae
+
+# Install PyTorch via official PyTorch pip wheels for your CUDA version.
+# Example: CUDA 12.2
+pip install --index-url https://download.pytorch.org/whl/cu122 \
+  torch torchvision torchaudio
+
+# Or for CUDA 13.0
+pip install --index-url https://download.pytorch.org/whl/cu130 \
+  torch torchvision torchaudio
+
+# For CPU-only
+pip install torch torchvision torchaudio
 
 # Verify CUDA availability
 python - <<'PY'
@@ -25,43 +37,36 @@ PY
 
 ## Option 2: Pip with CUDA Support
 
-First, check your system's CUDA version:
+If you prefer a pip-only workflow, install core Python deps first and then install the PyTorch wheels that match your CUDA driver.
+
+1. Check your driver/CUDA version:
 
 ```bash
 nvidia-smi
 ```
 
-Then install the matching PyTorch build:
+2. Install core deps (inside a venv or conda env):
 
-### CUDA 12.2 (Most Common)
 ```bash
-pip install -r requirements-cu122.txt --index-url https://download.pytorch.org/whl/cu122
+pip install -r requirements.txt
 ```
 
-### CUDA 12.1
+3. Install PyTorch wheels using the appropriate index URL:
+
 ```bash
-pip install -r requirements-cu121.txt --index-url https://download.pytorch.org/whl/cu121
+# CUDA 12.2 (example)
+pip install --index-url https://download.pytorch.org/whl/cu122 \
+  torch torchvision torchaudio
+
+# CUDA 13.0
+pip install --index-url https://download.pytorch.org/whl/cu130 \
+  torch torchvision torchaudio
+
+# CPU-only
+pip install torch torchvision torchaudio
 ```
 
-### CUDA 13.0+
-```bash
-pip install -r requirements-cu130.txt --index-url https://download.pytorch.org/whl/cu130
-```
-
-### CPU-Only (No CUDA needed)
-```bash
-pip install -r requirements-cpu.txt
-```
-
-After installation, verify:
-```bash
-python - <<'PY'
-import torch
-print('CUDA available:', torch.cuda.is_available())
-if torch.cuda.is_available():
-    print('GPU:', torch.cuda.get_device_name(0))
-PY
-```
+Verify as above with the small Python snippet.
 
 ---
 
