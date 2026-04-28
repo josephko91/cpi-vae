@@ -40,11 +40,22 @@ def load_data_dirs_from_config(config_path):
                 return dirs
     except ImportError:
         pass
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[WARNING] YAML parsing failed: {e}, falling back to plain text")
     
-    # Fall back to plain text format (one directory per line)
-    dirs = [line.strip() for line in content.split('\n') if line.strip()]
+    # Fall back to plain text format (one directory per line, skip comments/blank lines)
+    dirs = []
+    for line in content.split('\n'):
+        line = line.strip()
+        # Skip empty lines, comments, and YAML syntax lines
+        if not line or line.startswith('#') or line in ('data_dirs:', 'data_dirs') or line == '-':
+            continue
+        # Remove leading dash from YAML list items
+        if line.startswith('- '):
+            line = line[2:].strip()
+        # Only add if it looks like a path
+        if line and not line.startswith('data_'):
+            dirs.append(line)
     return dirs
 
 
@@ -91,7 +102,6 @@ def main():
     if args.config:
         args.data_dirs = load_data_dirs_from_config(args.config)
         print(f"Loaded {len(args.data_dirs)} directories from {args.config}")
-        print(f"[DEBUG] Directories: {args.data_dirs}")
     
     train_mod.train(args)
 

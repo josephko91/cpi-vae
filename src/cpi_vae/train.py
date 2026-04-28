@@ -28,8 +28,6 @@ def train(config):
     max_samples = getattr(config, "max_samples", None)
     if max_samples is not None:
         max_samples = int(max_samples)
-    print(f"[DEBUG train] Initializing CPIDataset with {len(dirs)} directories, max_samples={max_samples}")
-    print(f"[DEBUG train] Dirs: {dirs}")
     dataset = CPIDataset(dirs, image_size=getattr(config, "image_size", 224), augment=True, max_samples=max_samples)
     if len(dataset) == 0:
         raise RuntimeError("No images found in data directories")
