@@ -46,7 +46,23 @@ def train(config):
     best_val = float("inf")
     epochs = int(getattr(config, "epochs", 10))
     out_dir = getattr(config, "out_dir", "checkpoints")
+    # how often to save checkpoints/reconstructions (every N epochs)
+    save_every = int(getattr(config, "save_every", 1))
     os.makedirs(out_dir, exist_ok=True)
+    # create a unique run subdirectory so checkpoints/reconstructions
+    # from different runs don't overwrite each other
+    from datetime import datetime
+    run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir = os.path.join(out_dir, f"run_{run_id}")
+    suffix = 1
+    while os.path.exists(run_dir):
+        run_dir = os.path.join(out_dir, f"run_{run_id}_{suffix}")
+        suffix += 1
+    os.makedirs(run_dir, exist_ok=False)
+
+    # warn if save_every is larger than total epochs
+    if save_every > epochs:
+        print(f"Warning: save_every={save_every} > epochs={epochs}. Only saving final epoch checkpoints.")
 
     for epoch in range(1, epochs + 1):
         model.train()
@@ -72,11 +88,17 @@ def train(config):
         n = len(dataset)
         print(f"Epoch {epoch} TrainLoss {train_loss/n:.6f} ValLoss {val_loss/n:.6f}")
 
-        # save checkpoint and reconstructions
-        ckpt = {"epoch": epoch, "model": model.state_dict(), "opt": opt.state_dict()}
-        torch.save(ckpt, os.path.join(out_dir, f"vae_epoch{epoch:03d}.pt"))
-        xb, _ = next(iter(val_loader))
-        xb = xb.to(device)
-        with torch.no_grad():
-            recon, _, _ = model(xb)
-        save_reconstructions(xb.cpu(), recon.cpu(), os.path.join(out_dir, f"recon_epoch{epoch:03d}.png"))
+        # save checkpoint and reconstructions according to save_every
+        do_save = (epoch == epochs) or (save_every > 0 and epoch % save_every == 0)
+        if save_every > epochs:
+            # if user requested saving less often than total epochs, only save final
+            do_save = (epoch == epochs)
+
+        if do_save:
+            ckpt = {"epoch": epoch, "model": model.state_dict(), "opt": opt.state_dict()}
+            torch.save(ckpt, os.path.join(run_dir, f"vae_epoch{epoch:03d}.pt"))
+            xb, _ = next(iter(val_loader))
+            xb = xb.to(device)
+            with torch.no_grad():
+                recon, _, _ = model(xb)
+            save_reconstructions(xb.cpu(), recon.cpu(), os.path.join(run_dir, f"recon_epoch{epoch:03d}.png"))

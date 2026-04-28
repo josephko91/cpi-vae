@@ -87,6 +87,8 @@ Examples:
     p.add_argument("--epochs", type=int, default=50)
     p.add_argument("--lr", type=float, default=1e-3)
     p.add_argument("--out_dir", type=str, default="checkpoints")
+    p.add_argument("--save_every", type=int, default=1,
+                    help="Save checkpoints and reconstructions every N epochs (default: 1)")
     p.add_argument("--val_frac", type=float, default=0.05)
     p.add_argument("--max_samples", type=int, default=None, help="Limit total dataset to this many random samples (optional)")
     p.add_argument("--device", type=str, default="cuda")
