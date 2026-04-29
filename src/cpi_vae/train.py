@@ -15,6 +15,8 @@ def vae_loss(recon, x, mu, logvar, recon_type="mse"):
     import torch.nn.functional as F
     if recon_type == "mse":
         recon_loss = F.mse_loss(recon, x, reduction="sum")
+    elif recon_type == "l1":
+        recon_loss = F.l1_loss(recon, x, reduction="sum")
     else:
         recon_loss = F.binary_cross_entropy(recon, x, reduction="sum")
     kld = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
@@ -48,6 +50,9 @@ def train(config):
     out_dir = getattr(config, "out_dir", "checkpoints")
     # how often to save checkpoints/reconstructions (every N epochs)
     save_every = int(getattr(config, "save_every", 1))
+    # reconstruction loss type and KLD weighting (beta-VAE)
+    recon_type = getattr(config, "recon_type", "mse")
+    beta = float(getattr(config, "beta", 1.0))
     os.makedirs(out_dir, exist_ok=True)
     # create a unique run subdirectory so checkpoints/reconstructions
     # from different runs don't overwrite each other
@@ -71,7 +76,8 @@ def train(config):
             xb = xb.to(device)
             opt.zero_grad()
             recon, mu, logvar = model(xb)
-            loss, _, _ = vae_loss(recon, xb, mu, logvar)
+            loss_recon, recon_loss, kld = vae_loss(recon, xb, mu, logvar)
+            loss = recon_loss + beta * kld
             loss.backward()
             opt.step()
             train_loss += loss.item()
@@ -82,7 +88,8 @@ def train(config):
             for xb, _ in tqdm(val_loader, desc=f"val  {epoch}"):
                 xb = xb.to(device)
                 recon, mu, logvar = model(xb)
-                loss, _, _ = vae_loss(recon, xb, mu, logvar)
+                _, recon_loss, kld = vae_loss(recon, xb, mu, logvar, recon_type=recon_type)
+                loss = recon_loss + beta * kld
                 val_loss += loss.item()
 
         n = len(dataset)

@@ -89,6 +89,11 @@ Examples:
     p.add_argument("--out_dir", type=str, default="checkpoints")
     p.add_argument("--save_every", type=int, default=1,
                     help="Save checkpoints and reconstructions every N epochs (default: 1)")
+    p.add_argument("--recon_type", type=str, default="mse",
+                    choices=["mse", "bce", "l1"],
+                    help="Reconstruction loss type: mse, bce, or l1 (default: mse)")
+    p.add_argument("--beta", type=float, default=1.0,
+                    help="Beta weight for KLD term (beta-VAE). Default 1.0")
     p.add_argument("--val_frac", type=float, default=0.05)
     p.add_argument("--max_samples", type=int, default=None, help="Limit total dataset to this many random samples (optional)")
     p.add_argument("--device", type=str, default="cuda")
