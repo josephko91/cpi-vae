@@ -65,6 +65,40 @@ def train(config):
         suffix += 1
     os.makedirs(run_dir, exist_ok=False)
 
+    # save the run/config metadata so the exact training settings are preserved
+    try:
+        # try to coerce config into a plain dict
+        from collections.abc import Mapping
+        if isinstance(config, Mapping):
+            cfg = dict(config)
+        else:
+            try:
+                cfg = vars(config)
+            except Exception:
+                cfg = {k: getattr(config, k) for k in dir(config) if not k.startswith('_')}
+    except Exception:
+        cfg = {}
+
+    # write YAML if available, otherwise JSON; always write a simple text summary
+    try:
+        import yaml
+        with open(os.path.join(run_dir, 'config.yaml'), 'w') as f:
+            yaml.safe_dump(cfg, f, sort_keys=False)
+        print('Saved config:', os.path.join(run_dir, 'config.yaml'))
+    except Exception:
+        import json
+        with open(os.path.join(run_dir, 'config.json'), 'w') as f:
+            json.dump(cfg, f, indent=2)
+        print('Saved config:', os.path.join(run_dir, 'config.json'))
+
+    try:
+        with open(os.path.join(run_dir, 'config.txt'), 'w') as f:
+            for k, v in sorted(cfg.items()):
+                f.write(f"{k}: {v}\n")
+        print('Saved config summary:', os.path.join(run_dir, 'config.txt'))
+    except Exception:
+        pass
+
     # warn if save_every is larger than total epochs
     if save_every > epochs:
         print(f"Warning: save_every={save_every} > epochs={epochs}. Only saving final epoch checkpoints.")
@@ -102,7 +136,8 @@ def train(config):
             do_save = (epoch == epochs)
 
         if do_save:
-            ckpt = {"epoch": epoch, "model": model.state_dict(), "opt": opt.state_dict()}
+            # include the run config dict in the checkpoint for reproducibility
+            ckpt = {"epoch": epoch, "model": model.state_dict(), "opt": opt.state_dict(), "config": cfg}
             torch.save(ckpt, os.path.join(run_dir, f"vae_epoch{epoch:03d}.pt"))
             xb, _ = next(iter(val_loader))
             xb = xb.to(device)
