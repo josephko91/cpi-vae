@@ -34,12 +34,19 @@ def train(config):
     if len(dataset) == 0:
         raise RuntimeError("No images found in data directories")
     val_frac = float(getattr(config, "val_frac", 0.05))
-    n_val = max(int(len(dataset) * val_frac), 1)
-    n_train = len(dataset) - n_val
-    train_ds, val_ds = random_split(dataset, [n_train, n_val])
+    # allow val_frac == 0 to disable validation entirely
+    n_val = int(len(dataset) * val_frac)
+    if n_val > 0:
+        n_train = len(dataset) - n_val
+        train_ds, val_ds = random_split(dataset, [n_train, n_val])
+        val_loader = DataLoader(val_ds, batch_size=getattr(config, "batch_size", 128), shuffle=False, num_workers=4)
+    else:
+        # use full dataset for training and skip validation
+        train_ds = dataset
+        val_ds = None
+        val_loader = None
 
     train_loader = DataLoader(train_ds, batch_size=getattr(config, "batch_size", 128), shuffle=True, num_workers=4)
-    val_loader = DataLoader(val_ds, batch_size=getattr(config, "batch_size", 128), shuffle=False, num_workers=4)
 
     device = torch.device(getattr(config, "device", "cuda") if torch.cuda.is_available() else "cpu")
     model = ConvVAE(in_channels=1, z_dim=getattr(config, "z_dim", 128), image_size=getattr(config, "image_size", 224)).to(device)
@@ -118,16 +125,22 @@ def train(config):
 
         model.eval()
         val_loss = 0.0
-        with torch.no_grad():
-            for xb, _ in tqdm(val_loader, desc=f"val  {epoch}"):
-                xb = xb.to(device)
-                recon, mu, logvar = model(xb)
-                _, recon_loss, kld = vae_loss(recon, xb, mu, logvar, recon_type=recon_type)
-                loss = recon_loss + beta * kld
-                val_loss += loss.item()
+        if val_loader is not None:
+            with torch.no_grad():
+                for xb, _ in tqdm(val_loader, desc=f"val  {epoch}"):
+                    xb = xb.to(device)
+                    recon, mu, logvar = model(xb)
+                    _, recon_loss, kld = vae_loss(recon, xb, mu, logvar, recon_type=recon_type)
+                    loss = recon_loss + beta * kld
+                    val_loss += loss.item()
+        else:
+            val_loss = None
 
         n = len(dataset)
-        print(f"Epoch {epoch} TrainLoss {train_loss/n:.6f} ValLoss {val_loss/n:.6f}")
+        if val_loss is None:
+            print(f"Epoch {epoch} TrainLoss {train_loss/n:.6f} (no validation)")
+        else:
+            print(f"Epoch {epoch} TrainLoss {train_loss/n:.6f} ValLoss {val_loss/n:.6f}")
 
         # save checkpoint and reconstructions according to save_every
         do_save = (epoch == epochs) or (save_every > 0 and epoch % save_every == 0)
@@ -139,7 +152,12 @@ def train(config):
             # include the run config dict in the checkpoint for reproducibility
             ckpt = {"epoch": epoch, "model": model.state_dict(), "opt": opt.state_dict(), "config": cfg}
             torch.save(ckpt, os.path.join(run_dir, f"vae_epoch{epoch:03d}.pt"))
-            xb, _ = next(iter(val_loader))
+            # pick a batch for reconstructions: prefer validation set, otherwise sample from training data
+            if val_loader is not None:
+                xb, _ = next(iter(val_loader))
+            else:
+                tmp_loader = DataLoader(train_ds, batch_size=getattr(config, "batch_size", 128), shuffle=False, num_workers=0)
+                xb, _ = next(iter(tmp_loader))
             xb = xb.to(device)
             with torch.no_grad():
                 recon, _, _ = model(xb)
