@@ -98,6 +98,7 @@ Examples:
     p.add_argument("--max_samples", type=int, default=None, help="Limit total dataset to this many random samples (optional)")
     p.add_argument("--device", type=str, default="cuda")
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--profile", action="store_true", help="Enable torch.profiler and write TensorBoard traces to run_dir/profile")
     return p
 
 

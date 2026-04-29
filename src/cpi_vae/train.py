@@ -9,6 +9,10 @@ from tqdm import tqdm
 from .data import CPIDataset
 from .model import ConvVAE
 from .utils import save_reconstructions, set_seed
+try:
+    from torch.profiler import profile, ProfilerActivity, schedule, tensorboard_trace_handler
+except Exception:
+    profile = None
 
 
 def vae_loss(recon, x, mu, logvar, recon_type="mse"):
@@ -110,6 +114,23 @@ def train(config):
     if save_every > epochs:
         print(f"Warning: save_every={save_every} > epochs={epochs}. Only saving final epoch checkpoints.")
 
+    # optionally enable profiler when requested (config.profile True)
+    profiler = None
+    if getattr(config, "profile", False) and profile is not None:
+        tb_dir = os.path.join(run_dir, "profile")
+        os.makedirs(tb_dir, exist_ok=True)
+        # small schedule: wait 1, warmup 1, active 3
+        prof_sched = schedule(wait=1, warmup=1, active=3, repeat=1)
+        profiler = profile(
+            activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA],
+            schedule=prof_sched,
+            on_trace_ready=tensorboard_trace_handler(tb_dir),
+            record_shapes=True,
+            profile_memory=True,
+            with_stack=True,
+        )
+        profiler.start()
+
     for epoch in range(1, epochs + 1):
         model.train()
         train_loss = 0.0
@@ -122,6 +143,8 @@ def train(config):
             loss.backward()
             opt.step()
             train_loss += loss.item()
+            if profiler is not None:
+                profiler.step()
 
         model.eval()
         val_loss = 0.0
@@ -162,3 +185,9 @@ def train(config):
             with torch.no_grad():
                 recon, _, _ = model(xb)
             save_reconstructions(xb.cpu(), recon.cpu(), os.path.join(run_dir, f"recon_epoch{epoch:03d}.png"))
+            if profiler is not None:
+                # stop profiler once we've captured a few steps
+                try:
+                    profiler.stop()
+                except Exception:
+                    pass
