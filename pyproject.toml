@@ -24,7 +24,7 @@ cu122 = ["torch>=2.0", "torchvision", "torchaudio"]
 cu130 = ["torch>=2.0", "torchvision", "torchaudio"]
 cpu = ["torch", "torchvision", "torchaudio"]
 # Development tools
-dev = ["pytest", "black", "flake8", "ipython"]
+dev = ["pytest", "black", "flake8", "ipython", "ipykernel"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

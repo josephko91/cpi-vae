@@ -14,3 +14,7 @@ numpy>=1.21
 Pillow>=9.0
 tqdm>=4.60
 pyyaml>=5.4
+# Jupyter kernel for running notebooks
+ipykernel>=6.0
+# Useful interactive shell (optional for notebooks)
+ipython>=7.0
