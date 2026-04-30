@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Small CLI wrapper that calls cpi_vae.train.train with argparse args."""
+"""
+Small CLI wrapper that calls cpi_vae.train.train with argparse args.
+E.g.
+python scripts/run_train.py --config configs/data_dirs.yaml --out_dir checkpoints --epochs 100 --batch_size 256 --z_dim 128 --lr 1e-3 --val_frac 0.05 --save_every 10 --device cuda --recon_type l1 --beta 0.5 --max_samples 100_000
+"""
 import sys
 import os
 from pathlib import Path
